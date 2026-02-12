@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Together - Room {{ROOM_ID}}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 15px;
+            background: #1a1a1a;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .room-header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+
+        .room-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .video-area {
+            flex: 1;
+            background: #242424;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #242424;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            overflow-y: auto;
+        }
+        .participants {
+            margin-bottom: 25px;
+        }
+
+        .participants h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .participant {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .participant:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .participant:last-child {
+            margin-bottom: 0;
+        }
+
+        .participant span {
+            font-weight: 500;
+        }
+
+        .host-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3); }
+            to { box-shadow: 0 4px 20px rgba(255, 107, 107, 0.6); }
+        }
+
+        .emoji-toolbar {
+            margin-top: 25px;
+        }
+
+        .emoji-toolbar h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .emoji-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            margin: 6px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 22px;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'EmojiOne Color', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .emoji-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .emoji-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .emoji-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.2) rotate(5deg);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .emoji-btn:active {
+            transform: scale(1.1) rotate(2deg);
+        }
+        #status {
+            padding: 15px 25px;
+            margin: 20px 0;
+            border-radius: 15px;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid transparent;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .connected {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border-color: rgba(40, 167, 69, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .disconnected {
+            background: linear-gradient(45deg, #dc3545, #e74c3c);
+            border-color: rgba(220, 53, 69, 0.5);
+        }
+
+        .connecting {
+            background: linear-gradient(45deg, #ffc107, #fd7e14);
+            border-color: rgba(255, 193, 7, 0.5);
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid #0052a3;
+        }
+
+        button:hover {
+            background: #0052a3;
+        }
+
+        button:disabled {
+            background: #666666;
+            cursor: not-allowed;
+            opacity: 0.6;
+            border-color: #555;
+        }
+        #video {
+            width: 100%;
+            height: calc(100vh - 250px);
+            min-height: 400px;
+            background: #000000;
+            border-radius: 4px;
+            border: 1px solid #555;
+            object-fit: contain;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 4px;
+            border: 1px solid #444;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            border: 1px solid #208637;
+        }
+
+        .file-input-label:hover {
+            background: #208637;
+        }
+
+        .floating-emoji {
+            position: fixed;
+            font-size: 60px;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', Arial, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Slide from left side to video */
+        .emoji-slide-left {
+            animation: slide-from-left 3s ease-out forwards;
+        }
+
+        /* Slide from right side to video */
+        .emoji-slide-right {
+            animation: slide-from-right 3s ease-out forwards;
+        }
+
+        /* Slide down from top */
+        .emoji-slide-down {
+            animation: slide-down 3s ease-out forwards;
+        }
+
+        @keyframes slide-from-left {
+            0% {
+                transform: translateX(-200px) scale(0.5) rotate(-15deg);
+                opacity: 0;
+            }
+            20% {
+                transform: translateX(-80px) scale(1.1) rotate(-8deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(150px) scale(1.3) rotate(5deg);
+                opacity: 0.9;
+            }
+            80% {
+                transform: translateX(400px) scale(1.0) rotate(10deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateX(600px) scale(0.8) rotate(15deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slide-from-right {
+            0% {
+                transform: translateX(200px) scale(0.5) rotate(15deg);
+                opacity: 0;
+            }
+            20% {
+                transform: translateX(80px) scale(1.1) rotate(8deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(-150px) scale(1.3) rotate(-5deg);
+                opacity: 0.9;
+            }
+            80% {
+                transform: translateX(-400px) scale(1.0) rotate(-10deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateX(-600px) scale(0.8) rotate(-15deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slide-down {
+            0% {
+                transform: translateY(-200px) scale(0.5) rotate(-10deg);
+                opacity: 0;
+            }
+            20% {
+                transform: translateY(-50px) scale(1.1) rotate(-5deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(150px) scale(1.3) rotate(3deg);
+                opacity: 0.9;
+            }
+            80% {
+                transform: translateY(350px) scale(1.0) rotate(8deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(500px) scale(0.8) rotate(12deg);
+                opacity: 0;
+            }
+        }
+        .debug-info {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            font-family: 'Courier New', 'Monaco', monospace;
+            font-size: 12px;
+            margin-top: 25px;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .debug-info::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .debug-info::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .debug-info::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .debug-info::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .screen-share-btn {
+            background: linear-gradient(45deg, #9c27b0, #673ab7) !important;
+        }
+
+        .screen-share-btn:hover {
+            background: linear-gradient(45deg, #7b1fa2, #5e35b1) !important;
+            box-shadow: 0 15px 35px rgba(156, 39, 176, 0.3) !important;
+        }
+
+        /* Special styling for section headers */
+        .sidebar h3 {
+            position: relative;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border-radius: 2px;
+        }
+
+        /* Enhanced audio controls section */
+        .sidebar > div {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar > div:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar > div p {
+            margin: 10px 0;
+            opacity: 0.7;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* Simple emoji buttons in sidebar */
+        .emoji-btn {
+            background: #333;
+            border: 1px solid #555;
+            padding: 8px;
+            margin: 3px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', Arial, sans-serif;
+        }
+
+        .emoji-btn:hover {
+            background: #444;
+        }
+        @media (max-width: 768px) {
+            .main-content { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .video-area { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="room-header">
+            <h1>🎬 Watch Together - Room: {{ROOM_ID}}</h1>
+            <div id="status" class="disconnected">🔌 Connecting to server...</div>
+            <div id="roomInfo"></div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-area">
+                <video id="video" controls preload="metadata"></video>
+
+                <div class="controls">
+                    <div id="hostControls">
+                        <button id="playBtn">▶️ Play</button>
+                        <button id="pauseBtn">⏸️ Pause</button>
+                        <button id="screenShareBtn" class="screen-share-btn">📱 Screen Share</button>
+                    </div>
+
+                    <div class="file-input-wrapper">
+                        <input type="file" id="videoFile" accept="video/*" />
+                        <label for="videoFile" class="file-input-label">📂 Load Video</label>
+                    </div>
+                </div>
+
+                <div id="debugInfo" class="debug-info" style="display: none;">
+                    <div><strong>Debug Console:</strong></div>
+                    <div id="debugLog"></div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="participants">
+                    <h3>👥 Participants (<span id="participantCount">0</span>)</h3>
+                    <div id="participantsList">
+                        <div style="text-align: center; color: #888; padding: 20px;">
+                            No participants yet...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3>🎤 Audio Controls</h3>
+                    <p style="color: #888; font-style: italic;">WebRTC voice chat coming soon!</p>
+                    <button disabled>🔇 Mute (Coming Soon)</button>
+                    <button disabled>🎧 Audio Settings</button>
+                </div>
+
+                <div class="emoji-toolbar">
+                    <h3>😊 Quick Reactions</h3>
+                    <div id="emojiButtons"></div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button onclick="toggleDebug()">🐛 Toggle Debug</button>
+                    <button onclick="testConnection()">🔍 Test Connection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        const roomId = '{{ROOM_ID}}';
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('name') || 'Anonymous';
+        const isHost = urlParams.get('host') === 'true';
+
+        let ws = null;
+        let connectionId = null;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 5;
+
+        // WebRTC variables for video streaming
+        let peerConnections = {}; // Store peer connections for each participant
+        let localStream = null; // Host's video stream to share
+
+        // Debug logging
+        function log(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            const debugLog = document.getElementById('debugLog');
+            if (debugLog) {
+                const time = new Date().toLocaleTimeString();
+                debugLog.innerHTML += `<div>[${time}] ${type.toUpperCase()}: ${message}</div>`;
+                debugLog.scrollTop = debugLog.scrollHeight;
+            }
+        }
+
+        function toggleDebug() {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function testConnection() {
+            log('Testing WebSocket connection...');
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('✅ WebSocket is connected!', 'success');
+                ws.send(JSON.stringify({type: 'ping', room_id: roomId}));
+            } else {
+                log('❌ WebSocket is not connected', 'error');
+                log(`WebSocket state: ${ws ? ws.readyState : 'null'}`, 'debug');
+                connectWebSocket();
+            }
+        }
+
+        // Emoji reactions
+        const emojis = [
+            '😂', '😍', '😱', '🔥', '👏', '😭', '💀', '🎉',
+            '🤯', '👍', '👎', '❤️', '😮', '🤔', '😎', '🥳'
+        ];
+
+        function initializeEmojis() {
+            const emojiContainer = document.getElementById('emojiButtons');
+            emojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.title = `React with ${emoji}`;
+                btn.onclick = () => sendReaction(emoji);
+                emojiContainer.appendChild(btn);
+            });
+            log('Initialized emoji buttons');
+        }
+
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            // For localhost, use port 8765; for tunnel access, use same host without port
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const wsUrl = isLocalhost
+                ? `${wsProtocol}//${window.location.hostname}:8765/`
+                : `${wsProtocol}//${window.location.host}/`;
+
+            log(`Attempting to connect to: ${wsUrl}`);
+
+            // Update status
+            updateStatus('connecting', '🔄 Connecting to server...');
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                log('✅ WebSocket connected successfully!', 'success');
+                reconnectAttempts = 0;
+                updateStatus('connected', '🟢 Connected to server');
+
+                // Join room immediately
+                const joinMessage = {
+                    type: 'join',
+                    room_id: roomId,
+                    user_name: userName,
+                    is_host: isHost
+                };
+
+                log(`Sending join message: ${JSON.stringify(joinMessage)}`);
+                ws.send(JSON.stringify(joinMessage));
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`Received message: ${JSON.stringify(data)}`);
+                    handleMessage(data);
+                } catch (e) {
+                    log(`Error parsing message: ${e.message}`, 'error');
+                }
+            };
+
+            ws.onclose = function(event) {
+                log(`WebSocket closed. Code: ${event.code}, Reason: ${event.reason}`, 'warn');
+                updateStatus('disconnected', '🔴 Disconnected from server');
+
+                // Attempt to reconnect
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    log(`Attempting reconnect ${reconnectAttempts}/${maxReconnectAttempts} in 3 seconds...`);
+                    setTimeout(connectWebSocket, 3000);
+                } else {
+                    log('❌ Max reconnection attempts reached', 'error');
+                    updateStatus('disconnected', '❌ Connection failed - please refresh');
+                }
+            };
+
+            ws.onerror = function(error) {
+                log(`WebSocket error: ${error}`, 'error');
+                updateStatus('disconnected', '❌ Connection error');
+            };
+        }
+
+        function updateStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = type;
+            status.textContent = message;
+        }
+
+        function handleMessage(data) {
+            switch(data.type) {
+                case 'joined':
+                    connectionId = data.connection_id;
+                    updateParticipants(data.users);
+                    updateRoomInfo();
+
+                    // Sync with current playback state if joining an active room
+                    if (data.playback_state && !isHost) {
+                        log(`Syncing with room playback state: ${JSON.stringify(data.playback_state)}`, 'info');
+                        syncVideo({
+                            is_playing: data.playback_state.is_playing,
+                            video_time: data.playback_state.current_time
+                        });
+                    }
+
+                    log(`Successfully joined room as ${isHost ? 'host' : 'participant'}`, 'success');
+
+                    // If joining as participant, request current video info
+                    if (!isHost) {
+                        setTimeout(requestVideoInfo, 1000);
+                    }
+                    break;
+
+                case 'user_joined':
+                    updateParticipants(data.users);
+                    log(`User joined: ${data.user}`, 'info');
+                    break;
+
+                case 'user_left':
+                    updateParticipants(data.users);
+                    log(`User left: ${data.user}`, 'info');
+                    break;
+
+                case 'reaction':
+                    showReaction(data.emoji, data.user);
+                    log(`Reaction from ${data.user}: ${data.emoji}`, 'info');
+                    break;
+
+                case 'sync':
+                    syncVideo(data);
+                    log(`Video sync: ${data.is_playing ? 'playing' : 'paused'} at ${data.video_time}s`, 'info');
+                    break;
+
+                case 'video_available':
+                    showVideoAvailableMessage(data);
+                    log(`Host shared ${data.video_type}: ${data.video_name}`, 'info');
+                    break;
+
+                case 'video_info':
+                    handleVideoInfo(data);
+                    break;
+
+                case 'webrtc_offer':
+                    handleWebRTCOffer(data);
+                    break;
+
+                case 'webrtc_answer':
+                    handleWebRTCAnswer(data);
+                    break;
+
+                case 'webrtc_ice_candidate':
+                    handleWebRTCIceCandidate(data);
+                    break;
+
+                case 'error':
+                    log(`Server error: ${data.message}`, 'error');
+                    break;
+
+                default:
+                    log(`Unknown message type: ${data.type}`, 'warn');
+            }
+        }
+
+        function updateRoomInfo() {
+            const roomInfo = document.getElementById('roomInfo');
+            roomInfo.innerHTML = `
+                <p>Welcome, <strong>${userName}</strong> ${isHost ? '(Host 👑)' : '(Participant)'}</p>
+            `;
+        }
+
+        function updateParticipants(users) {
+            const list = document.getElementById('participantsList');
+            const count = document.getElementById('participantCount');
+
+            if (!users || Object.keys(users).length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No participants yet...</div>';
+                count.textContent = '0';
+                return;
+            }
+
+            // Store participants globally for WebRTC
+            currentParticipants = users;
+
+            list.innerHTML = '';
+            count.textContent = Object.keys(users).length;
+
+            Object.entries(users).forEach(([userId, user]) => {
+                const div = document.createElement('div');
+                div.className = 'participant';
+
+                const userInfo = document.createElement('span');
+                userInfo.textContent = user.name;
+
+                const badges = document.createElement('span');
+                if (user.is_host) {
+                    badges.innerHTML = '<span class="host-badge">HOST 👑</span> ';
+                }
+                badges.innerHTML += user.is_muted ? '🔇' : '🎤';
+
+                div.appendChild(userInfo);
+                div.appendChild(badges);
+                list.appendChild(div);
+            });
+
+            // If host and has video loaded, start streaming to new participants
+            if (isHost && localStream) {
+                Object.entries(users).forEach(async ([userId, user]) => {
+                    if (!user.is_host && !peerConnections[userId]) {
+                        log(`Creating WebRTC connection for new participant: ${user.name}`, 'info');
+                        await createOfferForParticipant(userId);
+                    }
+                });
+            }
+        }
+
+        function sendReaction(emoji) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Cannot send reaction - not connected', 'error');
+                return;
+            }
+
+            const message = {
+                type: 'reaction',
+                emoji: emoji,
+                room_id: roomId
+            };
+
+            ws.send(JSON.stringify(message));
+            log(`Sent reaction: ${emoji}`);
+
+            // Show local reaction immediately
+            showReaction(emoji, userName + ' (You)');
+        }
+
+        function showReaction(emoji, user) {
+            // Create emoji element
+            const emojiEl = document.createElement('div');
+            emojiEl.className = 'floating-emoji';
+
+            // Get video area for positioning
+            const videoArea = document.querySelector('.video-area');
+            const rect = videoArea ? videoArea.getBoundingClientRect() : {
+                left: 100,
+                top: 200,
+                width: window.innerWidth - 200,
+                height: 300
+            };
+
+            // Randomly choose animation type
+            const animations = ['emoji-slide-left', 'emoji-slide-right', 'emoji-slide-down'];
+            const randomAnimation = animations[Math.floor(Math.random() * animations.length)];
+            emojiEl.classList.add(randomAnimation);
+
+            // Set initial position based on animation type
+            if (randomAnimation === 'emoji-slide-left') {
+                // Start from left side of screen
+                emojiEl.style.left = '0px';
+                emojiEl.style.top = (rect.top + Math.random() * rect.height) + 'px';
+            } else if (randomAnimation === 'emoji-slide-right') {
+                // Start from right side of screen
+                emojiEl.style.left = (window.innerWidth - 100) + 'px';
+                emojiEl.style.top = (rect.top + Math.random() * rect.height) + 'px';
+            } else {
+                // Slide down from top
+                emojiEl.style.left = (rect.left + Math.random() * rect.width) + 'px';
+                emojiEl.style.top = '0px';
+            }
+
+            // Set emoji content
+            emojiEl.innerHTML = emoji;
+            emojiEl.title = `Reaction from ${user}`;
+
+            document.body.appendChild(emojiEl);
+
+            log(`Showing emoji: ${emoji} from ${user} with ${randomAnimation} animation`, 'info');
+
+            setTimeout(() => {
+                if (emojiEl.parentNode) {
+                    emojiEl.remove();
+                }
+            }, 3000);
+        }
+
+        function loadVideo() {
+            const fileInput = document.getElementById('videoFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                log('No file selected', 'warn');
+                return;
+            }
+
+            const video = document.getElementById('video');
+            const url = URL.createObjectURL(file);
+            video.src = url;
+
+            log(`Loaded video: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`, 'success');
+
+            // Notify other users that host loaded a video
+            if (isHost && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'video_loaded',
+                    room_id: roomId,
+                    video_type: 'file',
+                    video_name: file.name
+                }));
+                log(`Notified room about video: ${file.name}`);
+            }
+
+            video.onloadedmetadata = function() {
+                log(`Video duration: ${Math.floor(video.duration)}s`, 'info');
+            };
+
+            video.onloadeddata = function() {
+                log(`Video data loaded, ready to stream`, 'info');
+
+                // Wait a bit for video to be fully ready, then start streaming
+                setTimeout(() => {
+                    startVideoStreaming();
+                }, 500);
+            };
+        }
+
+        function showVideoAvailableMessage(data) {
+            // Show a prominent message to participants
+            const videoArea = document.querySelector('.video-area');
+            const existingMsg = document.getElementById('video-message');
+            if (existingMsg) existingMsg.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'video-message';
+            messageDiv.style.cssText = `
+                background: linear-gradient(45deg, #28a745, #20c997);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                margin-bottom: 20px;
+                font-weight: bold;
+                box-shadow: 0 4px 20px rgba(40, 167, 69, 0.3);
+            `;
+
+            messageDiv.innerHTML = `
+                <h3>🎬 Host is sharing: ${data.video_name}</h3>
+                <p>Type: ${data.video_type === 'file' ? '📁 Video File' : '📱 Screen Share'}</p>
+                <p style="color: #fff8; font-size: 14px;">
+                    🔄 Connecting to receive live video stream...
+                </p>
+            `;
+
+            videoArea.insertBefore(messageDiv, videoArea.firstChild);
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 10000);
+        }
+
+        function handleVideoInfo(data) {
+            if (data.has_video) {
+                log(`Room has shared video: ${data.video_type} - ${data.video_name}`, 'info');
+                showVideoAvailableMessage(data);
+            } else {
+                log('No video currently shared in room', 'info');
+            }
+        }
+
+        function requestVideoInfo() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'request_video',
+                    room_id: roomId
+                }));
+            }
+        }
+
+        // WebRTC Video Streaming Functions
+        async function createPeerConnection(targetConnectionId) {
+            const configuration = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            };
+
+            const peerConnection = new RTCPeerConnection(configuration);
+            peerConnections[targetConnectionId] = peerConnection;
+
+            // Add local stream to peer connection (host only)
+            if (isHost && localStream) {
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+                log(`Added local stream tracks to peer connection for ${targetConnectionId}`, 'info');
+            }
+
+            // Handle incoming remote stream (participants only)
+            peerConnection.ontrack = function(event) {
+                const remoteStream = event.streams[0];
+                const video = document.getElementById('video');
+                video.srcObject = remoteStream;
+                log(`Received remote video stream from host!`, 'success');
+
+                // Hide the "ask host for file" message since we now have the stream
+                const videoMessage = document.getElementById('video-message');
+                if (videoMessage) {
+                    videoMessage.style.display = 'none';
+                }
+            };
+
+            // Handle ICE candidates
+            peerConnection.onicecandidate = function(event) {
+                if (event.candidate) {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'webrtc_ice_candidate',
+                            room_id: roomId,
+                            target_connection: targetConnectionId,
+                            candidate: event.candidate
+                        }));
+                        log(`Sent ICE candidate to ${targetConnectionId}`, 'debug');
+                    }
+                }
+            };
+
+            peerConnection.onconnectionstatechange = function() {
+                log(`WebRTC connection state with ${targetConnectionId}: ${peerConnection.connectionState}`, 'info');
+                if (peerConnection.connectionState === 'connected') {
+                    log(`✅ WebRTC connected with ${targetConnectionId}!`, 'success');
+                } else if (peerConnection.connectionState === 'failed') {
+                    log(`❌ WebRTC connection failed with ${targetConnectionId}`, 'error');
+                }
+            };
+
+            return peerConnection;
+        }
+
+        async function startVideoStreaming() {
+            if (!isHost) return;
+
+            try {
+                const video = document.getElementById('video');
+
+                if (video.srcObject) {
+                    // Screen sharing - use the MediaStream directly
+                    localStream = video.srcObject;
+                    log(`Using screen share stream with ${localStream.getTracks().length} tracks`, 'info');
+                } else if (video.src && video.readyState >= 2) {
+                    // Video file loaded - use captureStream if available
+                    if (video.captureStream) {
+                        localStream = video.captureStream(30);
+                        log(`Using video.captureStream() with ${localStream.getTracks().length} tracks`, 'info');
+                    } else {
+                        // Fallback to canvas capture
+                        await createCanvasStream(video);
+                    }
+                } else {
+                    log('No video source available to stream', 'warn');
+                    return;
+                }
+
+                log(`✅ Started video streaming! Stream has ${localStream.getTracks().length} tracks`, 'success');
+
+                // Create peer connections with all current participants
+                for (const [participantId, participant] of Object.entries(currentParticipants || {})) {
+                    if (participantId !== connectionId && !participant.is_host) {
+                        log(`Creating offer for participant: ${participant.name} (${participantId})`);
+                        await createOfferForParticipant(participantId);
+                    }
+                }
+
+                // Also create offers for any existing participants we might have missed
+                Object.keys(currentParticipants || {}).forEach(async (participantId) => {
+                    if (participantId !== connectionId && !peerConnections[participantId]) {
+                        log(`Creating delayed offer for: ${participantId}`);
+                        await createOfferForParticipant(participantId);
+                    }
+                });
+
+            } catch (error) {
+                log(`❌ Error starting video streaming: ${error.message}`, 'error');
+            }
+        }
+
+        async function createCanvasStream(video) {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+
+            log(`Creating canvas stream: ${canvas.width}x${canvas.height}`, 'info');
+
+            // Draw video frame to canvas continuously
+            function drawFrame() {
+                if (!video.paused && !video.ended && video.readyState >= 2) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                }
+                requestAnimationFrame(drawFrame);
+            }
+            drawFrame();
+
+            // Create stream from canvas
+            localStream = canvas.captureStream(30); // 30 FPS
+
+            // Try to add audio from the video
+            try {
+                if (video.captureStream) {
+                    const videoStream = video.captureStream();
+                    const audioTracks = videoStream.getAudioTracks();
+                    audioTracks.forEach(track => localStream.addTrack(track));
+                    log(`Added ${audioTracks.length} audio tracks from video`, 'info');
+                }
+            } catch (e) {
+                log(`Could not capture audio: ${e.message}`, 'warn');
+            }
+
+            log(`Canvas stream created with ${localStream.getTracks().length} tracks`, 'info');
+        }
+
+        async function createOfferForParticipant(targetConnectionId) {
+            try {
+                const peerConnection = await createPeerConnection(targetConnectionId);
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'webrtc_offer',
+                        room_id: roomId,
+                        target_connection: targetConnectionId,
+                        offer: offer
+                    }));
+                    log(`Sent WebRTC offer to ${targetConnectionId}`, 'info');
+                }
+            } catch (error) {
+                log(`Error creating offer for ${targetConnectionId}: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleWebRTCOffer(data) {
+            if (isHost) return; // Only participants handle offers
+
+            try {
+                const peerConnection = await createPeerConnection(data.from_connection);
+                await peerConnection.setRemoteDescription(data.offer);
+
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'webrtc_answer',
+                        room_id: roomId,
+                        target_connection: data.from_connection,
+                        answer: answer
+                    }));
+                    log(`Sent WebRTC answer to host`, 'info');
+                }
+            } catch (error) {
+                log(`Error handling WebRTC offer: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleWebRTCAnswer(data) {
+            if (!isHost) return; // Only host handles answers
+
+            try {
+                const peerConnection = peerConnections[data.from_connection];
+                if (peerConnection) {
+                    await peerConnection.setRemoteDescription(data.answer);
+                    log(`Set remote description from ${data.from_connection}`, 'info');
+                }
+            } catch (error) {
+                log(`Error handling WebRTC answer: ${error.message}`, 'error');
+            }
+        }
+
+        async function handleWebRTCIceCandidate(data) {
+            try {
+                const peerConnection = peerConnections[data.from_connection];
+                if (peerConnection) {
+                    await peerConnection.addIceCandidate(data.candidate);
+                    log(`Added ICE candidate from ${data.from_connection}`, 'debug');
+                }
+            } catch (error) {
+                log(`Error adding ICE candidate: ${error.message}`, 'error');
+            }
+        }
+
+        let currentParticipants = {};
+
+        function syncVideo(data) {
+            const video = document.getElementById('video');
+
+            if (!video.src && !video.srcObject) {
+                log('No video loaded to sync - waiting for host to share video', 'warn');
+                return;
+            }
+
+            log(`Syncing video: ${data.is_playing ? 'play' : 'pause'} at ${data.video_time}s`, 'info');
+
+            // Sync playback position (allow for network delays)
+            if (video.readyState >= 2) { // Video has loaded enough data
+                const timeDiff = Math.abs(video.currentTime - data.video_time);
+                if (timeDiff > 2) { // More tolerant threshold for network delays
+                    video.currentTime = data.video_time;
+                    log(`Corrected video time drift: ${timeDiff.toFixed(2)}s`, 'info');
+                }
+            }
+
+            // Sync play/pause state
+            if (data.is_playing && video.paused) {
+                video.play().catch(e => {
+                    log(`Error playing video: ${e.message}`, 'error');
+                    // Show user message about interaction requirement
+                    if (e.name === 'NotAllowedError') {
+                        log('Click on the video to enable autoplay', 'warn');
+                    }
+                });
+            } else if (!data.is_playing && !video.paused) {
+                video.pause();
+            }
+        }
+
+        async function startScreenShare() {
+            try {
+                log('Starting screen share...');
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+
+                log('Screen share started successfully!', 'success');
+
+                // Notify other users that host started screen share
+                if (isHost && ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'video_loaded',
+                        room_id: roomId,
+                        video_type: 'screen',
+                        video_name: 'Screen Share'
+                    }));
+                    log('Notified room about screen share');
+                }
+
+                // Start streaming the screen share to participants
+                startVideoStreaming();
+
+                // Handle stream ending
+                stream.getVideoTracks()[0].onended = function() {
+                    log('Screen share ended', 'info');
+                    video.srcObject = null;
+
+                    // Notify room that screen share ended
+                    if (isHost && ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'video_loaded',
+                            room_id: roomId,
+                            video_type: 'none',
+                            video_name: 'Screen share ended'
+                        }));
+                    }
+                };
+
+            } catch (err) {
+                log(`Screen share error: ${err.message}`, 'error');
+                if (err.name === 'NotAllowedError') {
+                    log('Screen sharing was cancelled or denied', 'warn');
+                }
+            }
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            log(`Initializing room: ${roomId} for user: ${userName} (${isHost ? 'host' : 'participant'})`);
+
+            initializeEmojis();
+            connectWebSocket();
+            updateRoomInfo();
+
+            // Setup file input
+            document.getElementById('videoFile').addEventListener('change', loadVideo);
+
+            // Setup host controls
+            const hostControls = document.getElementById('hostControls');
+            if (!isHost) {
+                hostControls.style.display = 'none';
+                log('Host controls hidden - user is not host');
+            }
+
+            // Video control events
+            document.getElementById('playBtn').onclick = function() {
+                if (!isHost) return;
+
+                const video = document.getElementById('video');
+                if (!video.src && !video.srcObject) {
+                    log('No video loaded to play', 'warn');
+                    return;
+                }
+
+                video.play();
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'play',
+                        room_id: roomId,
+                        video_time: video.currentTime
+                    }));
+                    log('Sent play command to room');
+                }
+            };
+
+            document.getElementById('pauseBtn').onclick = function() {
+                if (!isHost) return;
+
+                const video = document.getElementById('video');
+                video.pause();
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'pause',
+                        room_id: roomId,
+                        video_time: video.currentTime
+                    }));
+                    log('Sent pause command to room');
+                }
+            };
+
+            document.getElementById('screenShareBtn').onclick = function() {
+                if (!isHost) return;
+                startScreenShare();
+            };
+
+            log('Initialization complete!');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' && isHost) {
+                e.preventDefault();
+                const video = document.getElementById('video');
+                if (video.paused) {
+                    document.getElementById('playBtn').click();
+                } else {
+                    document.getElementById('pauseBtn').click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

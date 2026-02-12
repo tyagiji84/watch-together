@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watch Together</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 600px; margin: 0 auto; text-align: center; }
+        input, button { padding: 10px; margin: 10px; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Watch Together</h1>
+        <p>Create or join a room to start watching movies together with voice chat!</p>
+
+        <div>
+            <h3>Create a Room</h3>
+            <input type="text" id="hostName" placeholder="Your name" />
+            <button onclick="createRoom()">Create Room</button>
+        </div>
+
+        <div>
+            <h3>Join a Room</h3>
+            <input type="text" id="roomId" placeholder="Room ID" />
+            <input type="text" id="guestName" placeholder="Your name" />
+            <button onclick="joinRoom()">Join Room</button>
+        </div>
+    </div>
+
+    <script>
+        function createRoom() {
+            const name = document.getElementById('hostName').value;
+            if (!name) { alert('Please enter your name'); return; }
+
+            const roomId = Math.random().toString(36).substring(2, 8);
+            window.location.href = `/room/${roomId}?name=${name}&host=true`;
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value;
+            const name = document.getElementById('guestName').value;
+            if (!roomId || !name) { alert('Please enter room ID and your name'); return; }
+
+            window.location.href = `/room/${roomId}?name=${name}&host=false`;
+        }
+    </script>
+</body>
+</html>

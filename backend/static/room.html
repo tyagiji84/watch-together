@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Watch Together - Room {{ROOM_ID}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .room-header { text-align: center; margin-bottom: 20px; }
+        .main-content { display: flex; gap: 20px; }
+        .video-area { flex: 1; background: #2a2a2a; padding: 20px; border-radius: 10px; }
+        .sidebar { width: 300px; background: #2a2a2a; padding: 20px; border-radius: 10px; }
+        .participants { margin-bottom: 20px; }
+        .participant { padding: 10px; border-bottom: 1px solid #444; }
+        .host-badge { background: #007bff; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+        .emoji-toolbar { margin-top: 20px; }
+        .emoji-btn { background: none; border: 1px solid #444; padding: 10px; margin: 5px; border-radius: 5px; cursor: pointer; font-size: 20px; }
+        .emoji-btn:hover { background: #444; }
+        #status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #28a745; }
+        .disconnected { background: #dc3545; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #video { width: 100%; max-height: 400px; background: #000; }
+        .floating-emoji {
+            position: fixed;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: float-up 3s ease-out forwards;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(0px); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="room-header">
+            <h1>🎬 Room: {{ROOM_ID}}</h1>
+            <div id="status" class="disconnected">Connecting...</div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-area">
+                <video id="video" controls></video>
+                <div>
+                    <button id="playBtn">Play</button>
+                    <button id="pauseBtn">Pause</button>
+                    <input type="file" id="videoFile" accept="video/*" />
+                    <button onclick="loadVideo()">Load Video</button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="participants">
+                    <h3>Participants</h3>
+                    <div id="participantsList"></div>
+                </div>
+
+                <div>
+                    <h3>Voice Chat</h3>
+                    <p><em>WebRTC audio coming soon!</em></p>
+                    <button disabled>Mute (Coming Soon)</button>
+                </div>
+
+                <div class="emoji-toolbar">
+                    <h3>Reactions</h3>
+                    <div id="emojiButtons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roomId = '{{ROOM_ID}}';
+        const urlParams = new URLSearchParams(window.location.search);
+        const userName = urlParams.get('name');
+        const isHost = urlParams.get('host') === 'true';
+
+        let ws = null;
+        let connectionId = null;
+
+        // Emoji reactions
+        const emojis = ['😂', '😍', '😱', '🔥', '👏', '😭', '💀', '🎉', '🤯', '👍', '👎', '❤️'];
+
+        function initializeEmojis() {
+            const emojiContainer = document.getElementById('emojiButtons');
+            emojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.onclick = () => sendReaction(emoji);
+                emojiContainer.appendChild(btn);
+            });
+        }
+
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.hostname}:8765/`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                document.getElementById('status').className = 'connected';
+                document.getElementById('status').textContent = 'Connected';
+
+                // Join room
+                ws.send(JSON.stringify({
+                    type: 'join',
+                    room_id: roomId,
+                    user_name: userName,
+                    is_host: isHost
+                }));
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            ws.onclose = function() {
+                console.log('WebSocket disconnected');
+                document.getElementById('status').className = 'disconnected';
+                document.getElementById('status').textContent = 'Disconnected';
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleMessage(data) {
+            console.log('Received:', data);
+
+            switch(data.type) {
+                case 'joined':
+                    connectionId = data.connection_id;
+                    updateParticipants(data.users);
+                    break;
+                case 'user_joined':
+                case 'user_left':
+                    updateParticipants(data.users);
+                    break;
+                case 'reaction':
+                    showReaction(data.emoji, data.user);
+                    break;
+                case 'sync':
+                    syncVideo(data);
+                    break;
+            }
+        }
+
+        function updateParticipants(users) {
+            const list = document.getElementById('participantsList');
+            list.innerHTML = '';
+
+            Object.values(users).forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'participant';
+                div.innerHTML = `
+                    ${user.name}
+                    ${user.is_host ? '<span class="host-badge">HOST</span>' : ''}
+                    ${user.is_muted ? '🔇' : '🎤'}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function sendReaction(emoji) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'reaction',
+                    emoji: emoji,
+                    room_id: roomId
+                }));
+            }
+        }
+
+        function showReaction(emoji, user) {
+            const emojiEl = document.createElement('div');
+            emojiEl.className = 'floating-emoji';
+            emojiEl.style.left = Math.random() * 200 + 100 + 'px';
+            emojiEl.style.top = Math.random() * 100 + 200 + 'px';
+            emojiEl.textContent = emoji;
+            document.body.appendChild(emojiEl);
+
+            setTimeout(() => emojiEl.remove(), 3000);
+        }
+
+        function loadVideo() {
+            const file = document.getElementById('videoFile').files[0];
+            if (file) {
+                const video = document.getElementById('video');
+                video.src = URL.createObjectURL(file);
+            }
+        }
+
+        function syncVideo(data) {
+            const video = document.getElementById('video');
+            if (Math.abs(video.currentTime - data.video_time) > 0.5) {
+                video.currentTime = data.video_time;
+            }
+
+            if (data.is_playing && video.paused) {
+                video.play();
+            } else if (!data.is_playing && !video.paused) {
+                video.pause();
+            }
+        }
+
+        // Initialize
+        initializeEmojis();
+        connectWebSocket();
+
+        // Video controls (only for host)
+        document.getElementById('playBtn').onclick = function() {
+            if (isHost && ws && ws.readyState === WebSocket.OPEN) {
+                const video = document.getElementById('video');
+                video.play();
+                ws.send(JSON.stringify({
+                    type: 'play',
+                    room_id: roomId,
+                    video_time: video.currentTime
+                }));
+            }
+        };
+
+        document.getElementById('pauseBtn').onclick = function() {
+            if (isHost && ws && ws.readyState === WebSocket.OPEN) {
+                const video = document.getElementById('video');
+                video.pause();
+                ws.send(JSON.stringify({
+                    type: 'pause',
+                    room_id: roomId,
+                    video_time: video.currentTime
+                }));
+            }
+        };
+    </script>
+</body>
+</html>
