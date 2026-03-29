@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boredom Destroyer 9000</title>
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: #16162a;
+    --border: #2a2a4a;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Stars background */
+  #stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .star {
+    position: absolute; background: white; border-radius: 50%;
+    animation: twinkle var(--d) infinite ease-in-out;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.4); }
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 20px; }
+
+  header {
+    text-align: center; padding: 40px 20px 30px;
+  }
+  header h1 {
+    font-size: 2.8rem; font-weight: 800;
+    background: linear-gradient(135deg, #7c3aed, #06b6d4, #f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%,100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+  }
+  header p { color: var(--muted); margin-top: 8px; font-size: 1.1rem; }
+
+  /* Tab nav */
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-bottom: 24px;
+  }
+  .tab-btn {
+    padding: 10px 20px; border: 1px solid var(--border);
+    background: var(--card); color: var(--muted);
+    border-radius: 50px; cursor: pointer; font-size: 0.9rem;
+    transition: all 0.2s; user-select: none;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+  .tab-btn.active {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px;
+  }
+  .card h2 { font-size: 1.4rem; margin-bottom: 16px; }
+
+  button.btn {
+    padding: 12px 28px; border: none; border-radius: 50px;
+    cursor: pointer; font-size: 1rem; font-weight: 600;
+    transition: all 0.2s; user-select: none;
+  }
+  button.btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
+  button.btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-cyan { background: var(--accent2); color: #0d0d1a; }
+  .btn-amber { background: var(--accent3); color: #0d0d1a; }
+  .btn-red { background: #ef4444; color: white; }
+
+  /* ===== SPIN WHEEL ===== */
+  #wheelCanvas {
+    display: block; margin: 0 auto 20px;
+    border-radius: 50%; cursor: pointer;
+    filter: drop-shadow(0 0 20px #7c3aed88);
+  }
+  #wheelResult {
+    text-align: center; font-size: 1.3rem; font-weight: 700;
+    min-height: 2rem; color: var(--accent2);
+    transition: all 0.3s;
+  }
+  .wheel-controls { text-align: center; margin-top: 14px; }
+
+  /* ===== REFLEX GAME ===== */
+  #reflexArena {
+    width: 100%; height: 320px; background: #0a0a14;
+    border-radius: 12px; position: relative; overflow: hidden;
+    border: 1px solid var(--border); cursor: crosshair;
+  }
+  .dot {
+    position: absolute; width: 44px; height: 44px;
+    border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    animation: popIn 0.15s ease-out;
+    box-shadow: 0 0 18px currentColor;
+    transition: transform 0.1s;
+  }
+  .dot:hover { transform: scale(1.1); }
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  #reflexStats {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 16px; justify-content: center;
+  }
+  .stat-box {
+    background: #0a0a14; border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 20px; text-align: center;
+    min-width: 100px;
+  }
+  .stat-box .val { font-size: 2rem; font-weight: 800; color: var(--accent2); }
+  .stat-box .lbl { font-size: 0.8rem; color: var(--muted); }
+  #reflexMsg {
+    text-align: center; margin-top: 14px; font-size: 1rem;
+    color: var(--muted); min-height: 1.4rem;
+  }
+  .reflex-controls { text-align: center; margin-top: 12px; gap: 10px; display: flex; justify-content: center; flex-wrap: wrap; }
+
+  /* ===== JOKES ===== */
+  #jokeBox {
+    background: #0a0a14; border-radius: 12px; padding: 28px;
+    min-height: 140px; display: flex; align-items: center;
+    justify-content: center; text-align: center;
+    font-size: 1.15rem; line-height: 1.7; border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  #jokeBox.punchline { color: var(--accent3); font-size: 1.3rem; font-weight: 700; }
+  .joke-controls { text-align: center; margin-top: 18px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  #jokeCategory { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+  .cat-btn {
+    padding: 6px 16px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); border-radius: 20px; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .cat-btn.active { border-color: var(--accent3); color: var(--accent3); }
+
+  /* ===== DOODLE ===== */
+  #doodleCanvas {
+    display: block; width: 100%; height: 380px;
+    border-radius: 12px; cursor: crosshair;
+    border: 1px solid var(--border); touch-action: none;
+  }
+  .doodle-tools {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;
+    align-items: center;
+  }
+  .color-swatch {
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform 0.15s;
+  }
+  .color-swatch:hover, .color-swatch.active { transform: scale(1.3); border-color: white; }
+  .brush-slider { accent-color: var(--accent); height: 6px; cursor: pointer; }
+  label.tool-lbl { font-size: 0.85rem; color: var(--muted); }
+
+  /* ===== TRIVIA ===== */
+  #triviaQuestion {
+    font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; line-height: 1.5;
+  }
+  .trivia-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .trivia-opt {
+    padding: 14px; background: #0a0a14; border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer; text-align: center;
+    transition: all 0.2s; font-size: 0.95rem;
+  }
+  .trivia-opt:hover:not(.disabled) { border-color: var(--accent); color: var(--accent); }
+  .trivia-opt.correct { border-color: #22c55e; background: #052e16; color: #22c55e; }
+  .trivia-opt.wrong { border-color: #ef4444; background: #2d0707; color: #ef4444; }
+  .trivia-opt.disabled { cursor: default; }
+  #triviaScore {
+    display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .trivia-stat { font-size: 0.9rem; }
+  .trivia-stat span { font-weight: 700; color: var(--accent2); }
+  #triviaFeedback { min-height: 1.6rem; margin-top: 14px; font-size: 1rem; font-weight: 600; }
+  #triviaNext { margin-top: 14px; }
+
+  /* ===== RANDOM FACT ===== */
+  #factBox {
+    background: linear-gradient(135deg, #16162a, #1a1040);
+    border: 1px solid #2a2a4a; border-radius: 14px;
+    padding: 32px; text-align: center; font-size: 1.2rem; line-height: 1.8;
+    min-height: 160px; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  #factBox::before {
+    content: '"';
+    position: absolute; top: 10px; left: 20px;
+    font-size: 6rem; color: var(--accent); opacity: 0.15; font-family: Georgia, serif;
+    line-height: 1;
+  }
+  #factTag {
+    display: inline-block; margin-top: 14px;
+    padding: 4px 12px; border-radius: 20px; font-size: 0.8rem;
+    background: var(--accent); color: white;
+  }
+  .fact-area { text-align: center; }
+  .fact-controls { margin-top: 16px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  #factCount { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 2rem; }
+    .trivia-options { grid-template-columns: 1fr; }
+    #reflexArena { height: 240px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div class="wrapper">
+  <header>
+    <h1>Boredom Destroyer 9000</h1>
+    <p>Pick an activity. Stop being bored. You're welcome.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('spin')">🎡 Spin</button>
+    <button class="tab-btn" onclick="switchTab('reflex')">⚡ Reflex</button>
+    <button class="tab-btn" onclick="switchTab('jokes')">😂 Jokes</button>
+    <button class="tab-btn" onclick="switchTab('doodle')">🎨 Doodle</button>
+    <button class="tab-btn" onclick="switchTab('trivia')">🧠 Trivia</button>
+    <button class="tab-btn" onclick="switchTab('facts')">🤯 Facts</button>
+  </div>
+
+  <!-- SPIN WHEEL -->
+  <div id="panel-spin" class="panel active">
+    <div class="card">
+      <h2>🎡 What should you do?</h2>
+      <canvas id="wheelCanvas" width="320" height="320"></canvas>
+      <div id="wheelResult">Click spin!</div>
+      <div class="wheel-controls">
+        <button class="btn btn-primary" onclick="spinWheel()">SPIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFLEX GAME -->
+  <div id="panel-reflex" class="panel">
+    <div class="card">
+      <h2>⚡ Dot Slayer</h2>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:14px">Click/tap the dots as fast as possible. 30 seconds on the clock!</p>
+      <div id="reflexArena"></div>
+      <div id="reflexStats">
+        <div class="stat-box"><div class="val" id="reflexScore">0</div><div class="lbl">Score</div></div>
+        <div class="stat-box"><div class="val" id="reflexTime">30</div><div class="lbl">Seconds</div></div>
+        <div class="stat-box"><div class="val" id="reflexBest">--</div><div class="lbl">Best</div></div>
+      </div>
+      <div id="reflexMsg">Hit START to play!</div>
+      <div class="reflex-controls">
+        <button class="btn btn-cyan" onclick="startReflex()">START</button>
+        <button class="btn" style="background:var(--border);color:var(--text)" onclick="resetReflex()">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOKES -->
+  <div id="panel-jokes" class="panel">
+    <div class="card">
+      <h2>😂 Joke Machine</h2>
+      <div id="jokeCategory">
+        <button class="cat-btn active" onclick="setJokeCat('all',this)">All</button>
+        <button class="cat-btn" onclick="setJokeCat('pun',this)">Puns</button>
+        <button class="cat-btn" onclick="setJokeCat('dark',this)">Dark</button>
+        <button class="cat-btn" onclick="setJokeCat('tech',this)">Tech</button>
+        <button class="cat-btn" onclick="setJokeCat('dad',this)">Dad</button>
+      </div>
+      <div id="jokeBox">Press "Next Joke" to get started!</div>
+      <div class="joke-controls">
+        <button class="btn btn-amber" id="punchBtn" onclick="showPunchline()" style="display:none">Punchline 👀</button>
+        <button class="btn btn-primary" onclick="nextJoke()">Next Joke</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOODLE -->
+  <div id="panel-doodle" class="panel">
+    <div class="card">
+      <h2>🎨 Doodle Zone</h2>
+      <canvas id="doodleCanvas"></canvas>
+      <div class="doodle-tools">
+        <label class="tool-lbl">Color:</label>
+        <div class="color-swatch active" style="background:#7c3aed" onclick="setColor('#7c3aed',this)"></div>
+        <div class="color-swatch" style="background:#06b6d4" onclick="setColor('#06b6d4',this)"></div>
+        <div class="color-swatch" style="background:#f59e0b" onclick="setColor('#f59e0b',this)"></div>
+        <div class="color-swatch" style="background:#22c55e" onclick="setColor('#22c55e',this)"></div>
+        <div class="color-swatch" style="background:#ef4444" onclick="setColor('#ef4444',this)"></div>
+        <div class="color-swatch" style="background:#ec4899" onclick="setColor('#ec4899',this)"></div>
+        <div class="color-swatch" style="background:#ffffff" onclick="setColor('#ffffff',this)"></div>
+        <input type="color" id="customColor" style="width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;background:none;padding:0" onchange="setColor(this.value,null)" title="Custom color">
+        <label class="tool-lbl" style="margin-left:10px">Size:</label>
+        <input type="range" class="brush-slider" id="brushSize" min="2" max="40" value="8" style="width:90px">
+        <label class="tool-lbl">Eraser:</label>
+        <input type="checkbox" id="eraserMode" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+        <button class="btn btn-red" style="margin-left:auto" onclick="clearDoodle()">Clear</button>
+        <button class="btn btn-cyan" onclick="saveDoodle()">Save PNG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIVIA -->
+  <div id="panel-trivia" class="panel">
+    <div class="card">
+      <h2>🧠 Trivia Challenge</h2>
+      <div id="triviaScore">
+        <div class="trivia-stat">Score: <span id="tScore">0</span></div>
+        <div class="trivia-stat">Streak: <span id="tStreak">0</span></div>
+        <div class="trivia-stat">Question: <span id="tQNum">1</span>/10</div>
+      </div>
+      <div id="triviaQuestion">Loading question...</div>
+      <div class="trivia-options" id="triviaOptions"></div>
+      <div id="triviaFeedback"></div>
+      <button class="btn btn-primary" id="triviaNext" onclick="nextTrivia()" style="display:none">Next Question ➜</button>
+    </div>
+  </div>
+
+  <!-- FACTS -->
+  <div id="panel-facts" class="panel">
+    <div class="card">
+      <h2>🤯 Mind-Blowing Facts</h2>
+      <div class="fact-area">
+        <div id="factBox">Click "New Fact" to blow your mind!</div>
+        <div id="factTag" style="display:none"></div>
+        <div class="fact-controls">
+          <button class="btn btn-primary" onclick="newFact()">New Fact</button>
+          <button class="btn btn-cyan" onclick="copyFact()">Copy</button>
+        </div>
+        <div id="factCount"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<script>
+// ===================== STARS =====================
+(function(){
+  const c = document.getElementById('stars');
+  for(let i=0;i<120;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const sz = Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*4+2).toFixed(1)}s;animation-delay:${(Math.random()*5).toFixed(1)}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ===================== TABS =====================
+function switchTab(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='spin') drawWheel();
+  if(id==='doodle') initDoodle();
+}
+
+// ===================== SPIN WHEEL =====================
+const wheelItems = [
+  { label:'Take a walk', color:'#7c3aed' },
+  { label:'Watch funny videos', color:'#06b6d4' },
+  { label:'Learn something new', color:'#f59e0b' },
+  { label:'Draw something', color:'#22c55e' },
+  { label:'Call a friend', color:'#ef4444' },
+  { label:'Try a new recipe', color:'#ec4899' },
+  { label:'Read 10 pages', color:'#8b5cf6' },
+  { label:'Dance 3 minutes', color:'#0ea5e9' },
+  { label:'Do 20 pushups', color:'#f97316' },
+  { label:'Play a game', color:'#14b8a6' },
+  { label:'Write your thoughts', color:'#a855f7' },
+  { label:'Meditate 5 min', color:'#84cc16' },
+];
+let wheelAngle = 0, spinning = false;
+
+function drawWheel(highlight=-1){
+  const canvas = document.getElementById('wheelCanvas');
+  const ctx = canvas.getContext('2d');
+  const cx=160, cy=160, r=150;
+  const arc = (2*Math.PI)/wheelItems.length;
+  ctx.clearRect(0,0,320,320);
+  wheelItems.forEach((item,i)=>{
+    const start = wheelAngle + i*arc - Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+arc);
+    ctx.closePath();
+    ctx.fillStyle = i===highlight ? '#ffffff33' : item.color+'cc';
+    ctx.fill();
+    ctx.strokeStyle='#0d0d1a'; ctx.lineWidth=2;
+    ctx.stroke();
+    // label
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start+arc/2);
+    ctx.textAlign='right'; ctx.fillStyle='#fff';
+    ctx.font='bold 12px Segoe UI,sans-serif';
+    ctx.fillText(item.label,r-10,4);
+    ctx.restore();
+  });
+  // center circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,20,0,2*Math.PI);
+  ctx.fillStyle='#0d0d1a'; ctx.fill();
+  ctx.strokeStyle='#7c3aed'; ctx.lineWidth=3; ctx.stroke();
+  // pointer
+  ctx.beginPath();
+  ctx.moveTo(cx+155,cy);
+  ctx.lineTo(cx+135,cy-10);
+  ctx.lineTo(cx+135,cy+10);
+  ctx.closePath();
+  ctx.fillStyle='#f59e0b'; ctx.fill();
+}
+
+function spinWheel(){
+  if(spinning) return;
+  spinning=true;
+  document.getElementById('wheelResult').textContent='Spinning...';
+  const totalRotation = (Math.random()*6+8)*Math.PI*2;
+  const duration=4000, start=performance.now();
+  const startAngle=wheelAngle;
+  function animate(now){
+    const t=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-t,4);
+    wheelAngle=startAngle+totalRotation*ease;
+    drawWheel();
+    if(t<1){ requestAnimationFrame(animate); }
+    else {
+      spinning=false;
+      const arc=(2*Math.PI)/wheelItems.length;
+      const normalized = (((-wheelAngle%(2*Math.PI))+2*Math.PI))%(2*Math.PI);
+      const idx = Math.floor(normalized/arc)%wheelItems.length;
+      const picked = wheelItems[(wheelItems.length-idx)%wheelItems.length];
+      document.getElementById('wheelResult').textContent='➜ '+picked.label+'!';
+      drawWheel((wheelItems.length-idx)%wheelItems.length);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+drawWheel();
+
+// ===================== REFLEX GAME =====================
+let reflexScore=0, reflexBest=0, reflexTimer=null, reflexSpawnTimer=null, reflexRunning=false;
+const dotEmojis=['🔴','🟠','🟡','🟢','🔵','🟣','⭕','💥','⚡','🎯'];
+const dotColors=['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#06b6d4'];
+
+function startReflex(){
+  if(reflexRunning) return;
+  reflexRunning=true; reflexScore=0;
+  document.getElementById('reflexScore').textContent=0;
+  document.getElementById('reflexTime').textContent=30;
+  document.getElementById('reflexMsg').textContent='GO GO GO!';
+  document.getElementById('reflexArena').innerHTML='';
+  let timeLeft=30;
+  reflexTimer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('reflexTime').textContent=timeLeft;
+    if(timeLeft<=0){
+      clearInterval(reflexTimer); clearInterval(reflexSpawnTimer);
+      reflexRunning=false;
+      document.getElementById('reflexArena').innerHTML='';
+      if(reflexScore>reflexBest){ reflexBest=reflexScore; document.getElementById('reflexBest').textContent=reflexBest; }
+      document.getElementById('reflexMsg').textContent=`Game over! You scored ${reflexScore}. ${reflexScore>20?'🔥 Insane!':reflexScore>10?'Nice!':'Keep practicing!'}`;
+    }
+  },1000);
+  spawnDot();
+  reflexSpawnTimer=setInterval(spawnDot, 800);
+}
+
+function spawnDot(){
+  if(!reflexRunning) return;
+  const arena=document.getElementById('reflexArena');
+  const d=document.createElement('div');
+  d.className='dot';
+  const color=dotColors[Math.floor(Math.random()*dotColors.length)];
+  d.style.background=color;
+  d.style.color=color;
+  d.style.left=Math.random()*85+'%';
+  d.style.top=Math.random()*80+'%';
+  d.textContent=dotEmojis[Math.floor(Math.random()*dotEmojis.length)];
+  d.onclick=(e)=>{
+    e.stopPropagation();
+    reflexScore++;
+    document.getElementById('reflexScore').textContent=reflexScore;
+    showPop(e.clientX,e.clientY);
+    d.remove();
+    spawnDot();
+  };
+  arena.appendChild(d);
+  setTimeout(()=>{ if(d.parentNode){ d.remove(); } }, 2000);
+}
+
+function showPop(x,y){
+  const p=document.createElement('div');
+  p.textContent='+1';
+  p.style.cssText=`position:fixed;left:${x}px;top:${y}px;color:#22c55e;font-weight:800;font-size:1.3rem;pointer-events:none;z-index:999;animation:popUp 0.6s ease-out forwards`;
+  document.body.appendChild(p);
+  setTimeout(()=>p.remove(),600);
+}
+const popStyle=document.createElement('style');
+popStyle.textContent='@keyframes popUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-50px);opacity:0}}';
+document.head.appendChild(popStyle);
+
+function resetReflex(){
+  clearInterval(reflexTimer); clearInterval(reflexSpawnTimer);
+  reflexRunning=false; reflexScore=0;
+  document.getElementById('reflexScore').textContent=0;
+  document.getElementById('reflexTime').textContent=30;
+  document.getElementById('reflexMsg').textContent='Hit START to play!';
+  document.getElementById('reflexArena').innerHTML='';
+}
+
+// ===================== JOKES =====================
+const jokeDB = {
+  pun:[
+    {setup:"Why don't scientists trust atoms?",punch:"Because they make up everything!"},
+    {setup:"I'm reading a book about anti-gravity.",punch:"It's impossible to put down."},
+    {setup:"Did you hear about the mathematician who's afraid of negative numbers?",punch:"He'll stop at nothing to avoid them."},
+    {setup:"Why did the scarecrow win an award?",punch:"Because he was outstanding in his field."},
+    {setup:"I used to hate facial hair...",punch:"But then it grew on me."},
+    {setup:"What do you call a fake noodle?",punch:"An impasta."},
+    {setup:"Time flies like an arrow.",punch:"Fruit flies like a banana."},
+  ],
+  dark:[
+    {setup:"Why don't scientists trust atoms?",punch:"Because they make up everything — including your doctor's diagnosis."},
+    {setup:"My grief counselor died last week.",punch:"He was so good at his job though that I didn't care."},
+    {setup:"I asked the librarian if they had books about paranoia.",punch:"She whispered, 'They're right behind you...'"},
+    {setup:"A man walks into a library and asks for books about paranoia.",punch:"The librarian says: 'They're right behind you!' He was never seen again."},
+    {setup:"I told my doctor I broke my arm in two places.",punch:"He told me to stop going to those places."},
+  ],
+  tech:[
+    {setup:"Why do programmers prefer dark mode?",punch:"Because light attracts bugs!"},
+    {setup:"A SQL query walks into a bar...",punch:"...walks up to two tables and asks: 'Can I JOIN you?'"},
+    {setup:"How many programmers does it take to change a light bulb?",punch:"None, that's a hardware problem."},
+    {setup:"Why was the JavaScript developer sad?",punch:"Because he didn't know how to null his feelings."},
+    {setup:"There are only 10 types of people in this world:",punch:"Those who understand binary, and those who don't."},
+    {setup:"Why do Java developers wear glasses?",punch:"Because they don't C#."},
+    {setup:"A developer's kid says: 'Daddy, why is the sun rising in the east?'",punch:"Dad: 'It works on my machine.'"},
+  ],
+  dad:[
+    {setup:"I'm on a seafood diet.",punch:"I see food and I eat it."},
+    {setup:"Why can't you give Elsa a balloon?",punch:"Because she'll let it go."},
+    {setup:"Did you hear about the claustrophobic astronaut?",punch:"He just needed a little space."},
+    {setup:"What do you call cheese that isn't yours?",punch:"Nacho cheese."},
+    {setup:"Why couldn't the bicycle stand on its own?",punch:"It was two-tired."},
+    {setup:"What do you call a fish without eyes?",punch:"A fsh."},
+    {setup:"I asked my dog what 2 minus 2 is.",punch:"He said nothing."},
+  ]
+};
+let currentJokeCat='all', currentJoke=null, showingSetup=true;
+
+function setJokeCat(cat,btn){
+  currentJokeCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function getAllJokes(){
+  if(currentJokeCat==='all') return Object.values(jokeDB).flat();
+  return jokeDB[currentJokeCat]||[];
+}
+function nextJoke(){
+  const pool=getAllJokes();
+  currentJoke=pool[Math.floor(Math.random()*pool.length)];
+  showingSetup=true;
+  const box=document.getElementById('jokeBox');
+  box.className='';
+  box.textContent=currentJoke.setup;
+  document.getElementById('punchBtn').style.display='inline-block';
+}
+function showPunchline(){
+  if(!currentJoke) return;
+  const box=document.getElementById('jokeBox');
+  box.className='punchline';
+  box.textContent=currentJoke.punch;
+  document.getElementById('punchBtn').style.display='none';
+}
+
+// ===================== DOODLE =====================
+let doodleCtx, drawing=false, doodleColor='#7c3aed', initialized=false;
+
+function initDoodle(){
+  if(initialized) return; initialized=true;
+  const canvas=document.getElementById('doodleCanvas');
+  canvas.width=canvas.offsetWidth||800;
+  canvas.height=380;
+  doodleCtx=canvas.getContext('2d');
+  doodleCtx.fillStyle='#0a0a14';
+  doodleCtx.fillRect(0,0,canvas.width,canvas.height);
+  doodleCtx.lineCap='round'; doodleCtx.lineJoin='round';
+
+  function getPos(e){
+    const r=canvas.getBoundingClientRect();
+    const t=e.touches?e.touches[0]:e;
+    return [t.clientX-r.left, t.clientY-r.top];
+  }
+  canvas.addEventListener('mousedown',e=>{drawing=true;const[x,y]=getPos(e);doodleCtx.beginPath();doodleCtx.moveTo(x,y);});
+  canvas.addEventListener('mousemove',e=>{if(!drawing)return;draw(e);});
+  canvas.addEventListener('mouseup',()=>{drawing=false;doodleCtx.beginPath();});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const[x,y]=getPos(e);doodleCtx.beginPath();doodleCtx.moveTo(x,y);},{passive:false});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;draw(e);},{passive:false});
+  canvas.addEventListener('touchend',()=>{drawing=false;doodleCtx.beginPath();});
+}
+
+function draw(e){
+  const canvas=document.getElementById('doodleCanvas');
+  const r=canvas.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  const x=t.clientX-r.left, y=t.clientY-r.top;
+  const eraser=document.getElementById('eraserMode').checked;
+  const size=parseInt(document.getElementById('brushSize').value);
+  doodleCtx.globalCompositeOperation=eraser?'destination-out':'source-over';
+  doodleCtx.strokeStyle=doodleColor;
+  doodleCtx.lineWidth=size;
+  doodleCtx.lineTo(x,y);
+  doodleCtx.stroke();
+  doodleCtx.beginPath();
+  doodleCtx.moveTo(x,y);
+}
+
+function setColor(c,el){
+  doodleColor=c;
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+function clearDoodle(){
+  const canvas=document.getElementById('doodleCanvas');
+  doodleCtx.globalCompositeOperation='source-over';
+  doodleCtx.fillStyle='#0a0a14';
+  doodleCtx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function saveDoodle(){
+  const canvas=document.getElementById('doodleCanvas');
+  const a=document.createElement('a');
+  a.href=canvas.toDataURL('image/png');
+  a.download='my-doodle.png';
+  a.click();
+}
+
+// ===================== TRIVIA =====================
+const triviaQ = [
+  {q:"What is the largest planet in our solar system?",a:"Jupiter",wrong:["Saturn","Uranus","Neptune"]},
+  {q:"How many bones are in the adult human body?",a:"206",wrong:["189","214","235"]},
+  {q:"What programming language was created by Guido van Rossum?",a:"Python",wrong:["Ruby","Perl","Go"]},
+  {q:"What is the speed of light in a vacuum (approx)?",a:"299,792 km/s",wrong:["150,000 km/s","500,000 km/s","1,000,000 km/s"]},
+  {q:"Which element has the atomic number 79?",a:"Gold",wrong:["Silver","Platinum","Copper"]},
+  {q:"In what year did the World Wide Web become publicly available?",a:"1991",wrong:["1985","1995","1998"]},
+  {q:"What is the smallest country in the world by area?",a:"Vatican City",wrong:["Monaco","San Marino","Liechtenstein"]},
+  {q:"What does 'HTTP' stand for?",a:"HyperText Transfer Protocol",wrong:["High Transfer Text Protocol","HyperText Transmission Process","Hosted Text Transfer Protocol"]},
+  {q:"Which planet rotates on its side (axial tilt ~98°)?",a:"Uranus",wrong:["Neptune","Saturn","Venus"]},
+  {q:"What is the rarest blood type?",a:"AB-",wrong:["O-","B-","A-"]},
+  {q:"How many strings does a standard guitar have?",a:"6",wrong:["4","5","7"]},
+  {q:"What is the chemical symbol for Sodium?",a:"Na",wrong:["So","Sd","Sn"]},
+  {q:"Who wrote 'The Theory of Relativity'?",a:"Albert Einstein",wrong:["Isaac Newton","Nikola Tesla","Stephen Hawking"]},
+  {q:"What is the longest river in the world?",a:"Nile",wrong:["Amazon","Yangtze","Mississippi"]},
+  {q:"How many bits are in a byte?",a:"8",wrong:["4","16","32"]},
+];
+let tScore=0,tStreak=0,tQNum=0,tAnswered=false,tShuffled=[];
+
+function shuffleArr(a){return a.sort(()=>Math.random()-0.5);}
+
+function loadTrivia(){
+  tShuffled=shuffleArr([...triviaQ]);
+  tScore=0; tStreak=0; tQNum=0;
+  document.getElementById('tScore').textContent=0;
+  document.getElementById('tStreak').textContent=0;
+  nextTrivia();
+}
+
+function nextTrivia(){
+  if(tQNum>=Math.min(10,tShuffled.length)){
+    document.getElementById('triviaQuestion').textContent='Game Over!';
+    document.getElementById('triviaOptions').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:20px;font-size:1.2rem">Final Score: <strong style="color:var(--accent2)">${tScore}/10</strong><br><br><button class="btn btn-primary" onclick="loadTrivia()">Play Again</button></div>`;
+    document.getElementById('triviaFeedback').textContent='';
+    document.getElementById('triviaNext').style.display='none';
+    return;
+  }
+  tAnswered=false;
+  document.getElementById('triviaNext').style.display='none';
+  document.getElementById('triviaFeedback').textContent='';
+  document.getElementById('tQNum').textContent=tQNum+1;
+  const q=tShuffled[tQNum];
+  document.getElementById('triviaQuestion').textContent=q.q;
+  const opts=shuffleArr([q.a,...q.wrong]);
+  const container=document.getElementById('triviaOptions');
+  container.innerHTML='';
+  opts.forEach(o=>{
+    const d=document.createElement('div');
+    d.className='trivia-opt';
+    d.textContent=o;
+    d.onclick=()=>answerTrivia(o,q.a,container);
+    container.appendChild(d);
+  });
+}
+
+function answerTrivia(chosen,correct,container){
+  if(tAnswered) return;
+  tAnswered=true; tQNum++;
+  const opts=container.querySelectorAll('.trivia-opt');
+  opts.forEach(o=>{
+    o.classList.add('disabled');
+    if(o.textContent===correct) o.classList.add('correct');
+    else if(o.textContent===chosen && chosen!==correct) o.classList.add('wrong');
+  });
+  if(chosen===correct){
+    tScore++; tStreak++;
+    document.getElementById('tScore').textContent=tScore;
+    document.getElementById('tStreak').textContent=tStreak;
+    document.getElementById('triviaFeedback').style.color='#22c55e';
+    document.getElementById('triviaFeedback').textContent='Correct! '+['Nice!','Brilliant!','You got it!','Smart!','Yep!'][Math.floor(Math.random()*5)];
+  } else {
+    tStreak=0;
+    document.getElementById('tStreak').textContent=0;
+    document.getElementById('triviaFeedback').style.color='#ef4444';
+    document.getElementById('triviaFeedback').textContent=`Wrong! It was: ${correct}`;
+  }
+  document.getElementById('triviaNext').style.display='inline-block';
+}
+
+loadTrivia();
+
+// ===================== FACTS =====================
+const facts = [
+  {text:"A day on Venus is longer than a year on Venus — it takes 243 Earth days to rotate once, but only 225 Earth days to orbit the Sun.", tag:"Space"},
+  {text:"Cleopatra lived closer in time to the Moon landing than to the construction of the Great Pyramid.", tag:"History"},
+  {text:"Bananas are slightly radioactive due to naturally occurring potassium-40.", tag:"Science"},
+  {text:"The internet weighs roughly 50 grams — the mass of electrons carrying all online data at any given moment.", tag:"Tech"},
+  {text:"Honey never spoils. Edible honey has been found in 3,000-year-old Egyptian tombs.", tag:"Food"},
+  {text:"Oxford University is older than the Aztec Empire. Teaching began there around 1096 AD; the Aztec Empire was founded in 1428 AD.", tag:"History"},
+  {text:"There are more possible iterations of a game of chess than there are atoms in the observable universe.", tag:"Math"},
+  {text:"A group of flamingos is called a 'flamboyance'.", tag:"Animals"},
+  {text:"Sharks are older than trees. Sharks have existed for ~450 million years; trees appeared ~350 million years ago.", tag:"Biology"},
+  {text:"Your body replaces about 330 billion cells per day — roughly 1% of all your cells every 24 hours.", tag:"Biology"},
+  {text:"The average person walks about 100,000 miles in their lifetime — roughly 4 times around the Earth.", tag:"Human"},
+  {text:"Nintendo was founded in 1889 — originally as a playing card company.", tag:"Tech"},
+  {text:"There are more stars in the universe than grains of sand on all of Earth's beaches.", tag:"Space"},
+  {text:"A bolt of lightning contains enough energy to toast about 100,000 slices of bread.", tag:"Science"},
+  {text:"Octopuses have three hearts, blue blood, and their arms have independent neural clusters — they can taste what they touch.", tag:"Animals"},
+  {text:"The human brain generates about 23 watts of power — enough to run a dim light bulb.", tag:"Science"},
+  {text:"Finland has more saunas than cars. About 3.3 million saunas for 5.5 million people.", tag:"Culture"},
+  {text:"The phrase 'rule of thumb' likely predates any actual thumb-measuring law — its origin is uncertain but ancient.", tag:"Language"},
+  {text:"Crows can recognize individual human faces and will hold grudges for years.", tag:"Animals"},
+  {text:"If you removed all the empty space from atoms in the human body, all 7.9 billion humans would fit in a sugar cube.", tag:"Physics"},
+];
+let factIndex=0, factOrder=[];
+
+function shuffleFacts(){factOrder=facts.map((_,i)=>i).sort(()=>Math.random()-0.5);}
+shuffleFacts();
+
+function newFact(){
+  const f=facts[factOrder[factIndex%factOrder.length]];
+  factIndex++;
+  if(factIndex%facts.length===0) shuffleFacts();
+  document.getElementById('factBox').textContent=f.text;
+  const tag=document.getElementById('factTag');
+  tag.style.display='inline-block'; tag.textContent=f.tag;
+  document.getElementById('factCount').textContent=`Fact ${Math.min(factIndex,facts.length)} of ${facts.length}`;
+}
+
+function copyFact(){
+  const text=document.getElementById('factBox').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=event.currentTarget;
+    const orig=btn.textContent;
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent=orig,1500);
+  });
+}
+</script>
+</body>
+</html>

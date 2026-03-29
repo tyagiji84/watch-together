@@ -365,7 +365,7 @@ async def main():
     os.makedirs("static", exist_ok=True)
 
     # Create HTML files
-    with open("static/index.html", "w") as f:
+    with open("static/index.html", "w", encoding="utf-8") as f:
         f.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -417,7 +417,7 @@ async def main():
 </body>
 </html>""")
 
-    with open("static/room.html", "w") as f:
+    with open("static/room.html", "w", encoding="utf-8") as f:
         f.write("""<!DOCTYPE html>
 <html>
 <head>
@@ -697,6 +697,9 @@ async def main():
             with open("static/room_new.html", 'r', encoding='utf-8') as f:
                 content = f.read().replace("{{ROOM_ID}}", room_id)
                 return (200, [('Content-Type', 'text/html; charset=utf-8')], content.encode('utf-8'))
+        elif path == "/bored":
+            with open("static/bored.html", 'r', encoding='utf-8') as f:
+                return (200, [('Content-Type', 'text/html; charset=utf-8')], f.read().encode('utf-8'))
         elif path == "/favicon.ico":
             return (204, [], b"")
         else:
